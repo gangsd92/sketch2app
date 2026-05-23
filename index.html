@@ -2,105 +2,146 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Sketch2App — Gemini</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sketch2App — Gemini agent</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          background: '#09090b',
+          card: '#0f0f12',
+          border: '#27272a',
+          muted: '#a1a1aa',
+          accent: '#8b5cf6',
+        },
+        fontFamily: {
+          sans: ['ui-sans-serif','system-ui','-apple-system','Segoe UI','Roboto','sans-serif'],
+          mono: ['ui-monospace','SFMono-Regular','Menlo','monospace'],
+        }
+      }
+    }
+  };
+</script>
 <style>
-  * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: #0b0d12; color: #e6e8ee; }
-  body { display: grid; grid-template-rows: auto 1fr; }
-  header { display: flex; align-items: center; gap: 12px; padding: 12px 18px; border-bottom: 1px solid #1d2030; background: #0f1220; }
-  header h1 { margin: 0; font-size: 18px; letter-spacing: 0.4px; }
-  header .tag { font-size: 11px; padding: 3px 8px; border-radius: 999px; background: linear-gradient(90deg,#4f46e5,#06b6d4); color: #fff; }
-  header input { background: #0b0d12; color: #e6e8ee; border: 1px solid #2a2f44; border-radius: 8px; padding: 6px 10px; font-size: 12px; }
-  header .grow { flex: 1; }
-  header select, header button { background: #0b0d12; color: #e6e8ee; border: 1px solid #2a2f44; border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
-  header button.primary { background: linear-gradient(90deg,#4f46e5,#06b6d4); border-color: transparent; font-weight: 600; }
-  header button:disabled { opacity: 0.5; cursor: not-allowed; }
-  main { display: grid; grid-template-columns: 1fr 1fr; gap: 0; min-height: 0; }
-  .pane { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
-  .pane + .pane { border-left: 1px solid #1d2030; }
-  .pane-head { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: #0f1220; border-bottom: 1px solid #1d2030; font-size: 12px; color: #9aa3b8; }
-  .pane-head .dot { width: 8px; height: 8px; border-radius: 50%; background: #4f46e5; }
-  .pane-head .right { margin-left: auto; display: flex; gap: 6px; }
-  .pane-head button { background: transparent; border: 1px solid #2a2f44; color: #e6e8ee; border-radius: 6px; padding: 3px 9px; font-size: 11px; cursor: pointer; }
-  .pane-head button.active { background: #4f46e5; border-color: #4f46e5; }
-  .canvas-wrap { flex: 1; position: relative; background: #fff; }
-  canvas { position: absolute; inset: 0; width: 100%; height: 100%; cursor: crosshair; touch-action: none; }
-  .preview-wrap { flex: 1; position: relative; background: #fff; }
-  iframe { width: 100%; height: 100%; border: 0; background: #fff; }
-  .empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #6b7390; font-size: 13px; pointer-events: none; }
-  .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: #1d2030; padding: 10px 16px; border-radius: 10px; border: 1px solid #2a2f44; font-size: 12px; opacity: 0; transition: opacity .2s; pointer-events: none; }
-  .toast.show { opacity: 1; }
-  .status { font-size: 11px; color: #6b7390; }
-  .status.err { color: #f87171; }
-  .swatch { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #2a2f44; cursor: pointer; }
-  .swatch.active { border-color: #fff; }
-  .tools { display: flex; gap: 6px; align-items: center; }
-  details.hint { padding: 10px 14px; background: #0f1220; border-bottom: 1px solid #1d2030; font-size: 12px; color: #9aa3b8; }
-  details.hint summary { cursor: pointer; color: #c7cde0; }
-  code { background: #1d2030; padding: 1px 6px; border-radius: 4px; }
+  html, body { background: #09090b; color: #fafafa; height: 100%; }
+  body { font-feature-settings: "cv02","cv03","cv04","cv11"; }
+  *::-webkit-scrollbar { width: 10px; height: 10px; }
+  *::-webkit-scrollbar-thumb { background: #27272a; border-radius: 6px; }
+  *::-webkit-scrollbar-track { background: transparent; }
+  canvas { touch-action: none; }
+  .pulse-dot { animation: pulse 1.4s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: 0.3 } }
+  .shimmer { background: linear-gradient(90deg, #18181b 0%, #27272a 50%, #18181b 100%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
+  @keyframes shimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
+  .prose-agent p { margin: 0 0 8px 0; line-height: 1.55; }
+  .prose-agent code { background: #18181b; padding: 1px 5px; border-radius: 4px; font-size: 0.85em; }
+  .prose-agent ul, .prose-agent ol { margin: 0 0 8px 16px; }
+  .prose-agent li { line-height: 1.55; }
+  .prose-agent strong { color: #fff; }
+  .fade-in { animation: fadeIn .35s ease both; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px) } to { opacity: 1; transform: none } }
 </style>
 </head>
-<body>
-<header>
-  <h1>Sketch<span style="color:#06b6d4">2</span>App</h1>
-  <span class="tag">Gemini multimodal</span>
-  <span class="grow"></span>
-  <select id="model" title="Model">
+<body class="font-sans antialiased h-screen flex flex-col overflow-hidden">
+
+<!-- Top bar -->
+<header class="flex items-center gap-3 px-5 h-14 border-b border-border bg-card/70 backdrop-blur">
+  <div class="flex items-center gap-2">
+    <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-cyan-400 flex items-center justify-center text-black text-xs font-bold">S2</div>
+    <h1 class="text-[15px] font-semibold tracking-tight">Sketch<span class="text-violet-400">2</span>App</h1>
+    <span class="text-[10px] uppercase tracking-wider text-muted px-2 py-0.5 rounded-full border border-border ml-1">agent · gemini</span>
+  </div>
+  <div class="flex-1"></div>
+  <select id="model" title="Model" class="bg-background border border-border rounded-md text-xs px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-violet-500">
     <option value="gemini-2.5-flash">gemini-2.5-flash</option>
     <option value="gemini-2.5-pro">gemini-2.5-pro</option>
     <option value="gemini-2.0-flash">gemini-2.0-flash</option>
   </select>
-  <input id="apiKey" type="password" placeholder="Gemini API key" size="28" />
-  <button id="generate" class="primary">Generate ✨</button>
+  <input id="apiKey" type="password" placeholder="Gemini API key" class="bg-background border border-border rounded-md text-xs px-2.5 py-1.5 w-56 focus:outline-none focus:ring-1 focus:ring-violet-500" />
+  <button id="generate" class="bg-white text-black text-xs font-semibold rounded-md px-3.5 py-1.5 hover:bg-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed transition">Run agent</button>
 </header>
-<details class="hint">
-  <summary>How it works</summary>
-  Sketch a UI on the left canvas (boxes for buttons, lines for inputs, scribbles for headings). Click <b>Generate</b> and Gemini's multimodal vision turns it into a working, self-contained HTML page on the right. Get a free key at <code>aistudio.google.com/apikey</code>.
-</details>
 
-<main>
-  <section class="pane">
-    <div class="pane-head">
-      <span class="dot"></span> Sketch
-      <div class="tools" style="margin-left:14px">
-        <div class="swatch active" data-color="#111" style="background:#111"></div>
-        <div class="swatch" data-color="#4f46e5" style="background:#4f46e5"></div>
-        <div class="swatch" data-color="#06b6d4" style="background:#06b6d4"></div>
-        <div class="swatch" data-color="#ef4444" style="background:#ef4444"></div>
-        <div class="swatch" data-color="#10b981" style="background:#10b981"></div>
+<!-- Main 3-pane grid -->
+<main class="flex-1 grid grid-cols-12 min-h-0">
+
+  <!-- LEFT: Canvas -->
+  <section class="col-span-4 flex flex-col border-r border-border min-h-0">
+    <div class="flex items-center gap-2 px-4 h-10 border-b border-border bg-card/40 text-xs">
+      <span class="w-1.5 h-1.5 rounded-full bg-violet-500"></span>
+      <span class="font-medium">Sketch</span>
+      <span class="text-muted">— draw a rough UI</span>
+      <div class="flex-1"></div>
+      <div class="flex items-center gap-1 mr-2">
+        <button class="swatch w-4 h-4 rounded-full border-2 border-white" data-color="#111" style="background:#111"></button>
+        <button class="swatch w-4 h-4 rounded-full border-2 border-transparent" data-color="#8b5cf6" style="background:#8b5cf6"></button>
+        <button class="swatch w-4 h-4 rounded-full border-2 border-transparent" data-color="#06b6d4" style="background:#06b6d4"></button>
+        <button class="swatch w-4 h-4 rounded-full border-2 border-transparent" data-color="#ef4444" style="background:#ef4444"></button>
+        <button class="swatch w-4 h-4 rounded-full border-2 border-transparent" data-color="#10b981" style="background:#10b981"></button>
       </div>
-      <div class="right">
-        <button id="penBtn" class="active">Pen</button>
-        <button id="eraserBtn">Eraser</button>
-        <button id="clearBtn">Clear</button>
-      </div>
+      <button id="penBtn" class="px-2 py-0.5 rounded border border-violet-500 bg-violet-500/10 text-violet-300 text-[11px]">Pen</button>
+      <button id="eraserBtn" class="px-2 py-0.5 rounded border border-border text-[11px] hover:bg-card">Eraser</button>
+      <button id="clearBtn" class="px-2 py-0.5 rounded border border-border text-[11px] hover:bg-card">Clear</button>
     </div>
-    <div class="canvas-wrap">
-      <canvas id="canvas"></canvas>
+    <div class="flex-1 relative bg-white">
+      <canvas id="canvas" class="absolute inset-0 w-full h-full cursor-crosshair"></canvas>
     </div>
   </section>
-  <section class="pane">
-    <div class="pane-head">
-      <span class="dot" style="background:#06b6d4"></span> Live preview
-      <span id="status" class="status" style="margin-left:10px"></span>
-      <div class="right">
-        <button id="viewPreview" class="active">Preview</button>
-        <button id="viewCode">Code</button>
-        <button id="copyBtn">Copy</button>
-        <button id="downloadBtn">Download</button>
+
+  <!-- MIDDLE: Agent thread -->
+  <section class="col-span-4 flex flex-col border-r border-border min-h-0">
+    <div class="flex items-center gap-2 px-4 h-10 border-b border-border bg-card/40 text-xs">
+      <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+      <span class="font-medium">Agent</span>
+      <span class="text-muted">— Analyze · Plan · Build · Refine</span>
+      <div class="flex-1"></div>
+      <span id="agentStatus" class="text-[11px] text-muted">idle</span>
+    </div>
+    <div id="agentThread" class="flex-1 overflow-y-auto p-4 space-y-3">
+      <div class="text-xs text-muted text-center py-12 border border-dashed border-border rounded-lg">
+        <div class="text-2xl mb-2">✦</div>
+        Draw on the left, then hit <span class="text-white font-medium">Run agent</span>.<br/>
+        The agent will analyze your sketch, plan the components, build the app, and let you chat to refine it.
       </div>
     </div>
-    <div class="preview-wrap">
-      <iframe id="preview" sandbox="allow-scripts allow-forms"></iframe>
-      <pre id="codeView" style="display:none; position:absolute; inset:0; margin:0; padding:14px; overflow:auto; background:#0b0d12; color:#cdd3e6; font-size:12px; line-height:1.5;"></pre>
-      <div class="empty" id="emptyState">Sketch something, then click Generate.</div>
+    <!-- Chat refinement -->
+    <div class="border-t border-border p-3 bg-card/30">
+      <form id="chatForm" class="flex items-center gap-2">
+        <input id="chatInput" type="text" placeholder="Refine: 'make it dark mode', 'add a sign-up link'…" class="flex-1 bg-background border border-border rounded-md text-xs px-3 py-2 focus:outline-none focus:ring-1 focus:ring-violet-500" disabled />
+        <button id="chatSend" type="submit" class="bg-violet-500 hover:bg-violet-400 text-white text-xs font-semibold rounded-md px-3 py-2 disabled:opacity-40 disabled:cursor-not-allowed transition" disabled>Send</button>
+      </form>
     </div>
   </section>
+
+  <!-- RIGHT: Preview / Code -->
+  <section class="col-span-4 flex flex-col min-h-0">
+    <div class="flex items-center gap-2 px-4 h-10 border-b border-border bg-card/40 text-xs">
+      <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+      <span class="font-medium">Live output</span>
+      <div class="flex-1"></div>
+      <div class="inline-flex border border-border rounded-md overflow-hidden text-[11px]">
+        <button id="viewPreview" class="px-2.5 py-0.5 bg-white text-black font-medium">Preview</button>
+        <button id="viewCode" class="px-2.5 py-0.5 hover:bg-card">Code</button>
+      </div>
+      <button id="copyBtn" class="ml-1 px-2 py-0.5 rounded border border-border text-[11px] hover:bg-card" title="Copy HTML">Copy</button>
+      <button id="downloadBtn" class="px-2 py-0.5 rounded border border-border text-[11px] hover:bg-card" title="Download HTML">↓</button>
+    </div>
+    <div class="flex-1 relative bg-white">
+      <iframe id="preview" class="w-full h-full border-0" sandbox="allow-scripts allow-forms"></iframe>
+      <pre id="codeView" class="hidden absolute inset-0 m-0 p-4 overflow-auto bg-background text-zinc-300 text-[11px] leading-relaxed font-mono"></pre>
+      <div id="emptyState" class="absolute inset-0 flex items-center justify-center text-zinc-400 text-sm pointer-events-none">Waiting for agent…</div>
+    </div>
+  </section>
+
 </main>
-<div id="toast" class="toast"></div>
+
+<div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg border border-border bg-card text-xs opacity-0 transition pointer-events-none"></div>
 
 <script>
 (() => {
+  // ============ DOM refs ============
   const canvas = document.getElementById('canvas');
   const ctx = canvas.getContext('2d');
   const apiKeyInput = document.getElementById('apiKey');
@@ -109,78 +150,93 @@
   const preview = document.getElementById('preview');
   const codeView = document.getElementById('codeView');
   const emptyState = document.getElementById('emptyState');
-  const status = document.getElementById('status');
+  const thread = document.getElementById('agentThread');
+  const agentStatus = document.getElementById('agentStatus');
+  const chatForm = document.getElementById('chatForm');
+  const chatInput = document.getElementById('chatInput');
+  const chatSend = document.getElementById('chatSend');
   const toast = document.getElementById('toast');
 
-  let drawing = false;
-  let lastX = 0, lastY = 0;
-  let color = '#111';
-  let lineWidth = 3;
-  let tool = 'pen';
+  // ============ State ============
+  let drawing = false, lastX = 0, lastY = 0;
+  let color = '#111', tool = 'pen';
   let lastCode = '';
+  let lastPlan = null;
+  let lastSketchB64 = '';
 
-  // ---- restore key
+  // ============ Restore API key ============
   const savedKey = localStorage.getItem('gemini_key');
   if (savedKey) apiKeyInput.value = savedKey;
   apiKeyInput.addEventListener('change', () => localStorage.setItem('gemini_key', apiKeyInput.value));
 
-  // ---- canvas sizing with white background
+  // ============ Canvas ============
   function resizeCanvas() {
     const wrap = canvas.parentElement;
     const dpr = window.devicePixelRatio || 1;
     const w = wrap.clientWidth, h = wrap.clientHeight;
-    const snapshot = canvas.width ? ctx.getImageData(0, 0, canvas.width, canvas.height) : null;
+    const snap = canvas.width ? ctx.getImageData(0, 0, canvas.width, canvas.height) : null;
     canvas.width = w * dpr; canvas.height = h * dpr;
     canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
-    if (snapshot) ctx.putImageData(snapshot, 0, 0);
+    if (snap) ctx.putImageData(snap, 0, 0);
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    drawHint();
+  }
+  function drawHint() {
+    ctx.fillStyle = '#cbd5e1'; ctx.font = '13px ui-sans-serif, system-ui';
+    ctx.fillText('Sketch a UI here — try a header, a card, buttons, a form…', 20, 32);
   }
   new ResizeObserver(resizeCanvas).observe(canvas.parentElement);
   resizeCanvas();
 
-  function getXY(e) {
+  function xy(e) {
     const r = canvas.getBoundingClientRect();
     const t = e.touches ? e.touches[0] : e;
     return [t.clientX - r.left, t.clientY - r.top];
   }
-  function start(e) { e.preventDefault(); drawing = true; [lastX, lastY] = getXY(e); }
-  function move(e) {
+  canvas.addEventListener('pointerdown', e => { e.preventDefault(); drawing = true; [lastX, lastY] = xy(e); });
+  canvas.addEventListener('pointermove', e => {
     if (!drawing) return; e.preventDefault();
-    const [x, y] = getXY(e);
+    const [x, y] = xy(e);
     ctx.strokeStyle = tool === 'eraser' ? '#fff' : color;
-    ctx.lineWidth = tool === 'eraser' ? 24 : lineWidth;
+    ctx.lineWidth = tool === 'eraser' ? 24 : 3;
     ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(x, y); ctx.stroke();
     [lastX, lastY] = [x, y];
-  }
-  function end() { drawing = false; }
-  canvas.addEventListener('pointerdown', start);
-  canvas.addEventListener('pointermove', move);
-  window.addEventListener('pointerup', end);
-
-  // ---- tool buttons
-  document.getElementById('penBtn').addEventListener('click', () => { tool = 'pen'; setActive('penBtn','eraserBtn'); });
-  document.getElementById('eraserBtn').addEventListener('click', () => { tool = 'eraser'; setActive('eraserBtn','penBtn'); });
-  document.getElementById('clearBtn').addEventListener('click', () => {
-    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
   });
-  function setActive(onId, offId) {
-    document.getElementById(onId).classList.add('active');
-    document.getElementById(offId).classList.remove('active');
+  window.addEventListener('pointerup', () => drawing = false);
+
+  // Tool buttons
+  const penBtn = document.getElementById('penBtn'), eraserBtn = document.getElementById('eraserBtn');
+  function setTool(t) {
+    tool = t;
+    penBtn.className = 'px-2 py-0.5 rounded text-[11px] ' + (t === 'pen' ? 'border border-violet-500 bg-violet-500/10 text-violet-300' : 'border border-border hover:bg-card');
+    eraserBtn.className = 'px-2 py-0.5 rounded text-[11px] ' + (t === 'eraser' ? 'border border-violet-500 bg-violet-500/10 text-violet-300' : 'border border-border hover:bg-card');
   }
+  penBtn.addEventListener('click', () => setTool('pen'));
+  eraserBtn.addEventListener('click', () => setTool('eraser'));
+  document.getElementById('clearBtn').addEventListener('click', () => {
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height); drawHint();
+  });
   document.querySelectorAll('.swatch').forEach(sw => sw.addEventListener('click', () => {
-    document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
-    sw.classList.add('active'); color = sw.dataset.color; tool = 'pen';
-    setActive('penBtn','eraserBtn');
+    document.querySelectorAll('.swatch').forEach(s => s.classList.replace('border-white','border-transparent'));
+    sw.classList.replace('border-transparent','border-white');
+    color = sw.dataset.color; setTool('pen');
   }));
 
-  // ---- preview / code toggle
+  // ============ Preview / code toggle ============
   const vpBtn = document.getElementById('viewPreview');
   const vcBtn = document.getElementById('viewCode');
-  vpBtn.addEventListener('click', () => { preview.style.display = 'block'; codeView.style.display = 'none'; vpBtn.classList.add('active'); vcBtn.classList.remove('active'); });
-  vcBtn.addEventListener('click', () => { preview.style.display = 'none'; codeView.style.display = 'block'; vcBtn.classList.add('active'); vpBtn.classList.remove('active'); });
-
+  vpBtn.addEventListener('click', () => {
+    preview.classList.remove('hidden'); codeView.classList.add('hidden');
+    vpBtn.className = 'px-2.5 py-0.5 bg-white text-black font-medium';
+    vcBtn.className = 'px-2.5 py-0.5 hover:bg-card';
+  });
+  vcBtn.addEventListener('click', () => {
+    preview.classList.add('hidden'); codeView.classList.remove('hidden');
+    vcBtn.className = 'px-2.5 py-0.5 bg-white text-black font-medium';
+    vpBtn.className = 'px-2.5 py-0.5 hover:bg-card';
+  });
   document.getElementById('copyBtn').addEventListener('click', async () => {
     if (!lastCode) return showToast('Nothing to copy');
     await navigator.clipboard.writeText(lastCode); showToast('Copied!');
@@ -193,90 +249,257 @@
     URL.revokeObjectURL(url);
   });
 
-  function showToast(msg, isErr) {
-    toast.textContent = msg; toast.classList.add('show');
-    toast.style.borderColor = isErr ? '#7f1d1d' : '#2a2f44';
-    setTimeout(() => toast.classList.remove('show'), 2200);
+  function showToast(msg) {
+    toast.textContent = msg; toast.style.opacity = '1';
+    setTimeout(() => toast.style.opacity = '0', 2000);
   }
-  function setStatus(msg, err) { status.textContent = msg; status.className = 'status' + (err ? ' err' : ''); }
 
-  // ---- the prompt
-  const SYSTEM_PROMPT = `You are an expert front-end engineer. The user has drawn a rough wireframe of a web UI.
-Convert the sketch into a polished, working, self-contained HTML document.
+  // ============ Agent thread UI helpers ============
+  function clearThread() { thread.innerHTML = ''; }
+  function step(title, opts = {}) {
+    const id = 'step-' + Math.random().toString(36).slice(2, 8);
+    const el = document.createElement('div');
+    el.id = id;
+    el.className = 'fade-in rounded-lg border border-border bg-card overflow-hidden';
+    el.innerHTML = `
+      <div class="flex items-center gap-2 px-3 py-2 border-b border-border">
+        <span class="status w-2 h-2 rounded-full bg-violet-500 pulse-dot"></span>
+        <span class="text-xs font-medium">${title}</span>
+        <span class="flex-1"></span>
+        <span class="step-time text-[10px] text-muted"></span>
+      </div>
+      <div class="step-body p-3 text-xs text-zinc-300 prose-agent"></div>
+    `;
+    thread.appendChild(el);
+    thread.scrollTop = thread.scrollHeight;
+    const t0 = performance.now();
+    return {
+      el,
+      body: el.querySelector('.step-body'),
+      done(success = true, extraTime) {
+        const dot = el.querySelector('.status');
+        dot.classList.remove('pulse-dot');
+        dot.className = 'status w-2 h-2 rounded-full ' + (success ? 'bg-emerald-400' : 'bg-red-500');
+        const ms = Math.round(performance.now() - t0);
+        el.querySelector('.step-time').textContent = (extraTime || ms) + ' ms';
+      },
+      append(html) { this.body.insertAdjacentHTML('beforeend', html); thread.scrollTop = thread.scrollHeight; },
+      setHtml(html) { this.body.innerHTML = html; thread.scrollTop = thread.scrollHeight; },
+    };
+  }
+  function userMsg(text) {
+    const el = document.createElement('div');
+    el.className = 'fade-in self-end ml-8 rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-2 text-xs text-violet-100';
+    el.textContent = text;
+    thread.appendChild(el); thread.scrollTop = thread.scrollHeight;
+  }
+
+  // ============ Gemini API ============
+  async function callGemini({ parts, jsonSchema, temperature = 0.5 }) {
+    const key = apiKeyInput.value.trim();
+    if (!key) throw new Error('Add your Gemini API key (top right)');
+    localStorage.setItem('gemini_key', key);
+    const body = {
+      contents: [{ parts }],
+      generationConfig: { temperature, maxOutputTokens: 8192 }
+    };
+    if (jsonSchema) {
+      body.generationConfig.responseMimeType = 'application/json';
+      body.generationConfig.responseSchema = jsonSchema;
+    }
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelSel.value}:generateContent?key=${encodeURIComponent(key)}`;
+    const r = await fetch(url, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    if (!r.ok) {
+      const txt = await r.text();
+      throw new Error(`HTTP ${r.status}: ${txt.slice(0, 240)}`);
+    }
+    const j = await r.json();
+    const text = j?.candidates?.[0]?.content?.parts?.map(p => p.text).filter(Boolean).join('\n') || '';
+    if (!text) throw new Error('Empty response from model');
+    return text;
+  }
+
+  function stripHtml(text) {
+    let html = text.trim();
+    html = html.replace(/^```(?:html)?\s*/i, '').replace(/```\s*$/i, '').trim();
+    const i = html.search(/<!DOCTYPE|<html/i);
+    if (i > 0) html = html.slice(i);
+    return html;
+  }
+
+  // ============ Agent: phase 1 — Analyze (structured JSON) ============
+  const ANALYZE_SCHEMA = {
+    type: 'object',
+    properties: {
+      reasoning: { type: 'string', description: 'A short narration of what you see and infer (2-4 sentences).' },
+      title: { type: 'string' },
+      summary: { type: 'string' },
+      components: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            name: { type: 'string' },
+            role: { type: 'string', description: 'Role in the UI (e.g. header, form, card list).' },
+            details: { type: 'string', description: 'Concrete description of contents & behaviour.' }
+          },
+          required: ['name','role','details']
+        }
+      },
+      theme: { type: 'string', description: 'Style direction: minimal / playful / corporate / dark / etc.' },
+      interactions: { type: 'array', items: { type: 'string' } }
+    },
+    required: ['reasoning','title','summary','components','theme','interactions']
+  };
+
+  async function analyze(sketchB64) {
+    const s = step('① Analyze the sketch');
+    s.setHtml('<div class="shimmer h-3 w-1/2 rounded mb-2"></div><div class="shimmer h-3 w-3/4 rounded mb-2"></div><div class="shimmer h-3 w-2/3 rounded"></div>');
+    try {
+      const text = await callGemini({
+        parts: [
+          { text: `You are a senior product designer. The user drew a rough wireframe.
+Analyze it and produce a structured plan. Be concrete and decisive. If something is unclear, make a reasonable product choice.` },
+          { inline_data: { mime_type: 'image/png', data: sketchB64 } },
+        ],
+        jsonSchema: ANALYZE_SCHEMA,
+        temperature: 0.4,
+      });
+      const plan = JSON.parse(text);
+      lastPlan = plan;
+
+      const compsHtml = plan.components.map(c => `
+        <div class="rounded-md border border-border bg-background/60 p-2">
+          <div class="flex items-center gap-2"><span class="text-[10px] uppercase tracking-wider text-violet-300 bg-violet-500/10 px-1.5 py-0.5 rounded">${escapeHtml(c.role)}</span><span class="text-xs font-medium">${escapeHtml(c.name)}</span></div>
+          <div class="text-[11px] text-muted mt-1">${escapeHtml(c.details)}</div>
+        </div>
+      `).join('');
+      const interHtml = plan.interactions.map(i => `<li>${escapeHtml(i)}</li>`).join('');
+      s.setHtml(`
+        <div class="text-[11px] uppercase tracking-wider text-muted mb-1">Reasoning</div>
+        <div>${escapeHtml(plan.reasoning)}</div>
+        <div class="mt-3 text-[11px] uppercase tracking-wider text-muted mb-1">Plan</div>
+        <div class="text-sm font-semibold text-white">${escapeHtml(plan.title)}</div>
+        <div class="text-xs text-muted mb-2">${escapeHtml(plan.summary)} · <span class="text-violet-300">${escapeHtml(plan.theme)}</span></div>
+        <div class="space-y-1.5">${compsHtml}</div>
+        ${interHtml ? `<div class="mt-3 text-[11px] uppercase tracking-wider text-muted mb-1">Interactions</div><ul>${interHtml}</ul>` : ''}
+      `);
+      s.done(true);
+      return plan;
+    } catch (e) {
+      s.setHtml('<div class="text-red-400">Analyze failed: ' + escapeHtml(e.message) + '</div>');
+      s.done(false);
+      throw e;
+    }
+  }
+
+  // ============ Agent: phase 2 — Build HTML ============
+  async function build(plan, sketchB64) {
+    const s = step('② Build the app');
+    s.setHtml('<div class="text-muted">Composing components into a working page…</div><div class="mt-2 shimmer h-3 w-2/3 rounded mb-1"></div><div class="shimmer h-3 w-1/2 rounded"></div>');
+    try {
+      const text = await callGemini({
+        parts: [
+          { text: `You are an expert front-end engineer. Build a polished, working web page from this plan + sketch.
+
+PLAN (JSON):
+${JSON.stringify(plan, null, 2)}
 
 REQUIREMENTS:
-- Output a COMPLETE HTML file: <!DOCTYPE html> through </html>.
-- All CSS in a <style> tag, all JS in a <script> tag, no external requests.
-- Use modern, clean design — generous spacing, sensible color palette, nice typography (system fonts).
-- Make sketched buttons, inputs, and forms FUNCTIONAL with JS where reasonable (toggle state, validate, etc).
-- Infer intent: a box labeled "login" → a login form; scribbles near top → a header; etc.
-- If unsure, make sensible product choices. Add subtle animations.
-- DO NOT include any explanation, markdown fences, or commentary. Output ONLY the HTML.`;
-
-  async function generate() {
-    const key = apiKeyInput.value.trim();
-    if (!key) { showToast('Add your Gemini API key (top right)', true); apiKeyInput.focus(); return; }
-    localStorage.setItem('gemini_key', key);
-
-    const dataUrl = canvas.toDataURL('image/png');
-    const b64 = dataUrl.split(',')[1];
-
-    genBtn.disabled = true; setStatus('Sending sketch to ' + modelSel.value + '…');
-    emptyState.style.display = 'none';
-
-    const body = {
-      contents: [{
-        parts: [
-          { text: SYSTEM_PROMPT },
-          { inline_data: { mime_type: 'image/png', data: b64 } }
-        ]
-      }],
-      generationConfig: { temperature: 0.6, maxOutputTokens: 8192 }
-    };
-
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelSel.value}:generateContent?key=${encodeURIComponent(key)}`;
-      const t0 = performance.now();
-      const r = await fetch(url, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
-      if (!r.ok) {
-        const txt = await r.text();
-        throw new Error(`HTTP ${r.status}: ${txt.slice(0, 200)}`);
-      }
-      const j = await r.json();
-      const text = j?.candidates?.[0]?.content?.parts?.map(p => p.text).filter(Boolean).join('\n') || '';
-      if (!text) throw new Error('Empty response from model');
-
-      // strip markdown fences if present
-      let html = text.trim();
-      html = html.replace(/^```(?:html)?\s*/i, '').replace(/```\s*$/i, '').trim();
-      const docStart = html.search(/<!DOCTYPE|<html/i);
-      if (docStart > 0) html = html.slice(docStart);
-
+- Output ONE complete HTML document (<!DOCTYPE html> ... </html>).
+- All CSS inline in <style>, all JS inline in <script>. No external network requests.
+- Use modern, polished design: generous spacing, sensible neutral palette, system fonts, subtle shadows, rounded corners. Match the theme: ${plan.theme}.
+- Make interactive elements actually work (toggle states, form validation, etc).
+- Honor the layout shown in the sketch.
+- Output ONLY the HTML — no markdown fences, no commentary.` },
+          { inline_data: { mime_type: 'image/png', data: sketchB64 } }
+        ],
+        temperature: 0.55,
+      });
+      const html = stripHtml(text);
       lastCode = html;
-      preview.srcdoc = html;
-      codeView.textContent = html;
-      const ms = Math.round(performance.now() - t0);
-      setStatus(`✓ Generated in ${ms} ms · ${html.length.toLocaleString()} chars`);
+      preview.srcdoc = html; codeView.textContent = html; emptyState.style.display = 'none';
+      s.setHtml(`<div>✓ Generated a complete page (${html.length.toLocaleString()} chars).</div><div class="text-muted mt-1">Open the Preview pane on the right.</div>`);
+      s.done(true);
+      return html;
+    } catch (e) {
+      s.setHtml('<div class="text-red-400">Build failed: ' + escapeHtml(e.message) + '</div>');
+      s.done(false);
+      throw e;
+    }
+  }
+
+  // ============ Agent: phase 3 — Refine via chat ============
+  async function refine(instruction) {
+    userMsg(instruction);
+    const s = step('✎ Refine');
+    s.setHtml('<div class="text-muted">Applying: <em>' + escapeHtml(instruction) + '</em></div>');
+    try {
+      const text = await callGemini({
+        parts: [
+          { text: `You are an expert front-end engineer. Below is the current HTML of a generated app, and an instruction from the user.
+
+CURRENT HTML:
+\`\`\`html
+${lastCode}
+\`\`\`
+
+USER INSTRUCTION: "${instruction}"
+
+Return the FULL updated HTML document. Output ONLY the HTML — no markdown fences, no commentary.` },
+        ],
+        temperature: 0.4,
+      });
+      const html = stripHtml(text);
+      lastCode = html;
+      preview.srcdoc = html; codeView.textContent = html;
+      s.setHtml(`<div>✓ Applied: <em>${escapeHtml(instruction)}</em></div><div class="text-muted mt-1">Updated HTML (${html.length.toLocaleString()} chars).</div>`);
+      s.done(true);
+    } catch (e) {
+      s.setHtml('<div class="text-red-400">Refine failed: ' + escapeHtml(e.message) + '</div>');
+      s.done(false);
+    }
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  // ============ Orchestrator ============
+  async function runAgent() {
+    if (!apiKeyInput.value.trim()) { showToast('Add your Gemini API key (top right)'); apiKeyInput.focus(); return; }
+    clearThread();
+    genBtn.disabled = true; chatInput.disabled = true; chatSend.disabled = true;
+    agentStatus.innerHTML = '<span class="inline-flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-violet-500 pulse-dot"></span>thinking…</span>';
+    const dataUrl = canvas.toDataURL('image/png');
+    lastSketchB64 = dataUrl.split(',')[1];
+    try {
+      const plan = await analyze(lastSketchB64);
+      await build(plan, lastSketchB64);
+      chatInput.disabled = false; chatSend.disabled = false; chatInput.focus();
+      agentStatus.innerHTML = '<span class="text-emerald-400">✓ ready — chat to refine</span>';
     } catch (e) {
       console.error(e);
-      setStatus(e.message || 'Generation failed', true);
-      showToast('Error: ' + e.message, true);
-      emptyState.style.display = 'flex';
+      agentStatus.innerHTML = '<span class="text-red-400">failed</span>';
+      showToast(e.message || 'Agent failed');
     } finally {
       genBtn.disabled = false;
     }
   }
 
-  genBtn.addEventListener('click', generate);
-  window.addEventListener('keydown', (e) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') generate();
-  });
+  genBtn.addEventListener('click', runAgent);
+  window.addEventListener('keydown', e => { if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') runAgent(); });
 
-  // tiny welcome sketch hint
-  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = '#bbb'; ctx.font = '14px system-ui';
-  ctx.fillText('Sketch a UI here — try a header, buttons, a form…', 24, 36);
-  ctx.fillText('Then click Generate ✨   (Cmd/Ctrl+Enter)', 24, 58);
+  chatForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    const v = chatInput.value.trim();
+    if (!v || !lastCode) return;
+    chatInput.value = '';
+    chatInput.disabled = true; chatSend.disabled = true;
+    agentStatus.innerHTML = '<span class="inline-flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-violet-500 pulse-dot"></span>refining…</span>';
+    try { await refine(v); agentStatus.innerHTML = '<span class="text-emerald-400">✓ updated</span>'; }
+    finally { chatInput.disabled = false; chatSend.disabled = false; chatInput.focus(); }
+  });
 })();
 </script>
 </body>

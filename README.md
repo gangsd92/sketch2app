@@ -1,18 +1,25 @@
 # Sketch2App
 
-**Sketch a UI on a canvas. Gemini multimodal turns it into a working web app — live, in seconds.**
+**Sketch a UI. A Gemini agent analyzes, plans, builds, and chats with you to refine it — live.**
 
 Built for the Google I/O Hackathon 2026.
 
-![demo](https://img.shields.io/badge/Gemini-2.5%20Flash%20%2F%20Pro-4f46e5) ![multimodal](https://img.shields.io/badge/multimodal-vision%20%E2%86%92%20code-06b6d4) ![zero install](https://img.shields.io/badge/zero-install-10b981)
+![demo](https://img.shields.io/badge/Gemini-2.5%20Flash%20%2F%20Pro-8b5cf6) ![agent](https://img.shields.io/badge/multi--step-agent-06b6d4) ![multimodal](https://img.shields.io/badge/multimodal-vision%20%E2%86%92%20code-10b981) ![zero install](https://img.shields.io/badge/zero-install-fafafa)
 
 ---
 
 ## What it does
 
-You draw a rough wireframe — boxes for buttons, lines for inputs, a scribbled heading. You hit **Generate**. Gemini's vision model reads the sketch, infers the user's intent, and produces a polished, interactive, **self-contained HTML page** in the right pane.
+A three-pane studio with a Gemini-powered agent in the middle:
 
-No build step. No backend. One HTML file.
+1. **Sketch** — draw a rough wireframe on a canvas (left pane).
+2. **Agent** — hit *Run agent*. A multi-step Gemini agent:
+   - **① Analyze** — vision model reads the sketch and produces a **structured plan** (JSON-schema enforced): title, summary, components, theme, interactions.
+   - **② Build** — composes the plan + sketch into a complete, self-contained HTML page.
+   - **③ Refine** — chat box at the bottom of the agent pane. Type "make it dark mode", "add a sign-up link", "use a teal palette" — Gemini patches the live app.
+3. **Live output** — the generated app runs in a sandboxed iframe on the right. Toggle to Code view, copy, or download.
+
+Built with **Tailwind (shadcn-style aesthetic)**, vanilla JS, one HTML file, no backend.
 
 ## Why it matters
 
@@ -31,27 +38,39 @@ This is **multimodal reasoning as a creative tool**: vision in, working code out
 4. Hit **Generate ✨** (or `Cmd/Ctrl+Enter`).
 5. Watch a working app appear on the right. Toggle to **Code** view, **Copy**, or **Download** the HTML.
 
-## How it works
+## How it works — the agent loop
 
 ```
-   sketch (canvas → PNG → base64)
-              │
-              ▼
-   ┌─────────────────────────┐
-   │  Gemini 2.5 Flash/Pro   │   ← multimodal: image + system prompt
-   │  generateContent API    │
-   └─────────────────────────┘
-              │
-              ▼
-   full HTML document → <iframe srcdoc=...>
+   sketch (canvas PNG, base64)
+            │
+            ▼
+   ┌──────────────────────────────────────┐
+   │ ① ANALYZE                            │
+   │  Gemini 2.5 with responseSchema      │  →  structured Plan JSON
+   │  (vision + JSON-mode)                │      { title, components[], theme,
+   └──────────────────────────────────────┘        interactions[], reasoning }
+            │
+            ▼
+   ┌──────────────────────────────────────┐
+   │ ② BUILD                              │
+   │  Gemini 2.5 (plan + sketch + system) │  →  full self-contained HTML
+   └──────────────────────────────────────┘
+            │            ▲
+            ▼            │ user message
+   ┌──────────────────────────────────────┐
+   │ ③ REFINE  (chat loop)                │
+   │  Gemini 2.5 (current HTML + msg)     │  →  updated HTML, swap into <iframe>
+   └──────────────────────────────────────┘
 ```
 
-- **Frontend only.** Canvas API for drawing, `fetch` straight to `generativelanguage.googleapis.com`.
+- **Structured output** — Phase 1 uses Gemini's `responseMimeType: application/json` with a `responseSchema`, so the plan is type-safe.
+- **Frontend only.** `fetch` straight to `generativelanguage.googleapis.com` — no backend, no proxy.
 - **Key stays local.** Stored in `localStorage`, never leaves your browser.
-- **Sandboxed preview.** Generated HTML runs in an `<iframe sandbox="allow-scripts allow-forms">`.
+- **Sandboxed preview.** Generated HTML runs in `<iframe sandbox="allow-scripts allow-forms">`.
 
 ## Tech
 
+- Tailwind (CDN) for the shadcn-style aesthetic — dark zinc theme, violet/cyan accents
 - HTML5 Canvas + Pointer Events for drawing
 - Gemini API (`gemini-2.5-flash`, `gemini-2.5-pro`, `gemini-2.0-flash` selectable)
 - Vanilla JS, no frameworks, no bundler, no dependencies

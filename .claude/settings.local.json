@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(open *)",
+      "Bash(git init *)",
+      "Bash(git config *)",
+      "Bash(gh auth *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(gh repo *)",
+      "Bash(git push *)",
+      "Bash(curl *)",
+      "Bash(git -c user.useConfigOnly=true -c commit.gpgsign=false commit -m ' *)"
+    ]
+  }
+}
