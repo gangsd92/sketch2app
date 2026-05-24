@@ -15,7 +15,7 @@ A three-pane studio with a Gemini-powered agent in the middle:
 1. **Sketch** — draw a rough wireframe on a canvas (left pane).
 2. **Agent** — hit *Run agent*. A multi-step Gemini agent:
    - **① Analyze** — vision model reads the sketch and produces a **structured plan** (JSON-schema enforced): title, summary, components, theme, interactions.
-   - **② Build** — composes the plan + sketch into a complete, self-contained HTML page.
+   - **② Build** — composes the plan + sketch into a complete, self-contained **multi-page Single Page Application (SPA)** with internal routing.
    - **③ Refine** — chat box at the bottom of the agent pane. Type "make it dark mode", "add a sign-up link", "use a teal palette" — Gemini patches the live app. **You can even draw on the sketch to point at things or add new elements while you chat.**
    - **④ Voice** — hit the microphone icon to dictate your refinements hands-free.
 3. **Live output** — the generated app runs in a sandboxed iframe on the right. Toggle to Code view, copy, or download.
@@ -87,8 +87,8 @@ This is **multimodal reasoning as a creative tool**: vision + voice in, working 
 
 - [x] **Refine loop**: send the current generated HTML + new sketch back to Gemini for iteration
 - [x] **Voice prompts**: dictate refinements using the microphone
-- [ ] **Multi-page**: generate a small sitemap from a sketched flow
-- [ ] **Component library mode**: paste your design tokens, get on-brand output
+- [x] **Multi-page**: generate a full sitemap and SPA from a sketched flow
+- [x] **Component library mode**: uses "shadcn-style" design tokens for high-end aesthetic
 
 ## License
 

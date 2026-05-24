@@ -372,22 +372,34 @@
       reasoning: { type: 'string', description: 'A short narration of what you see and infer (2-4 sentences).' },
       title: { type: 'string' },
       summary: { type: 'string' },
-      components: {
+      pages: {
         type: 'array',
+        description: 'The different screens or views identified in the sketch (sitemap).',
         items: {
           type: 'object',
           properties: {
-            name: { type: 'string' },
-            role: { type: 'string', description: 'Role in the UI (e.g. header, form, card list).' },
-            details: { type: 'string', description: 'Concrete description of contents & behaviour.' }
+            name: { type: 'string', description: 'Name of the page (e.g. Login, Dashboard).' },
+            route: { type: 'string', description: 'The internal route path (e.g. /login, /home).' },
+            components: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string' },
+                  role: { type: 'string' },
+                  details: { type: 'string' }
+                },
+                required: ['name','role','details']
+              }
+            }
           },
-          required: ['name','role','details']
+          required: ['name', 'route', 'components']
         }
       },
       theme: { type: 'string', description: 'Style direction: minimal / playful / corporate / dark / etc.' },
       interactions: { type: 'array', items: { type: 'string' } }
     },
-    required: ['reasoning','title','summary','components','theme','interactions']
+    required: ['reasoning','title','summary','pages','theme','interactions']
   };
 
   async function analyze(sketchB64) {
@@ -397,7 +409,8 @@
       const text = await callGemini({
         parts: [
           { text: `You are a senior product designer. The user drew a rough wireframe.
-Analyze it and produce a structured plan. Be concrete and decisive. If something is unclear, make a reasonable product choice.` },
+Analyze it and produce a structured plan. Identify if there are multiple screens or a user flow depicted.
+Be concrete and decisive. If something is unclear, make a reasonable product choice.` },
           { inline_data: { mime_type: 'image/png', data: sketchB64 } },
         ],
         jsonSchema: ANALYZE_SCHEMA,
@@ -406,12 +419,24 @@ Analyze it and produce a structured plan. Be concrete and decisive. If something
       const plan = JSON.parse(text);
       lastPlan = plan;
 
-      const compsHtml = plan.components.map(c => `
-        <div class="rounded-md border border-border bg-background/60 p-2">
-          <div class="flex items-center gap-2"><span class="text-[10px] uppercase tracking-wider text-violet-300 bg-violet-500/10 px-1.5 py-0.5 rounded">${escapeHtml(c.role)}</span><span class="text-xs font-medium">${escapeHtml(c.name)}</span></div>
-          <div class="text-[11px] text-muted mt-1">${escapeHtml(c.details)}</div>
+      const pagesHtml = plan.pages.map(p => `
+        <div class="rounded-md border border-border bg-background/60 p-2 mb-2">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-[10px] uppercase tracking-wider text-violet-300 bg-violet-500/10 px-1.5 py-0.5 rounded">PAGE</span>
+            <span class="text-xs font-medium">${escapeHtml(p.name)}</span>
+            <span class="text-[10px] text-muted">${escapeHtml(p.route)}</span>
+          </div>
+          <div class="space-y-1">
+            ${p.components.map(c => `
+              <div class="flex items-start gap-1.5 text-[11px]">
+                <span class="text-muted mt-0.5">•</span>
+                <span><span class="font-medium text-zinc-300">${escapeHtml(c.name)}:</span> ${escapeHtml(c.details)}</span>
+              </div>
+            `).join('')}
+          </div>
         </div>
       `).join('');
+
       const interHtml = plan.interactions.map(i => `<li>${escapeHtml(i)}</li>`).join('');
       s.setHtml(`
         <div class="text-[11px] uppercase tracking-wider text-muted mb-1">Reasoning</div>
@@ -419,7 +444,10 @@ Analyze it and produce a structured plan. Be concrete and decisive. If something
         <div class="mt-3 text-[11px] uppercase tracking-wider text-muted mb-1">Plan</div>
         <div class="text-sm font-semibold text-white">${escapeHtml(plan.title)}</div>
         <div class="text-xs text-muted mb-2">${escapeHtml(plan.summary)} · <span class="text-violet-300">${escapeHtml(plan.theme)}</span></div>
-        <div class="space-y-1.5">${compsHtml}</div>
+        <div class="mt-2">
+          <div class="text-[11px] uppercase tracking-wider text-muted mb-1">Sitemap</div>
+          ${pagesHtml}
+        </div>
         ${interHtml ? `<div class="mt-3 text-[11px] uppercase tracking-wider text-muted mb-1">Interactions</div><ul>${interHtml}</ul>` : ''}
       `);
       s.done(true);
@@ -434,25 +462,29 @@ Analyze it and produce a structured plan. Be concrete and decisive. If something
   // ============ Agent: phase 2 — Build HTML ============
   async function build(plan, sketchB64) {
     const s = step('② Build the app');
-    s.setHtml('<div class="text-muted">Composing components into a working page…</div><div class="mt-2 shimmer h-3 w-2/3 rounded mb-1"></div><div class="shimmer h-3 w-1/2 rounded"></div>');
+    s.setHtml('<div class="text-muted">Composing components into a multi-page SPA…</div><div class="mt-2 shimmer h-3 w-2/3 rounded mb-1"></div><div class="shimmer h-3 w-1/2 rounded"></div>');
     try {
       const text = await callGemini({
         parts: [
-          { text: `You are an expert front-end engineer. Build a polished, working web page from this plan + sketch.
+          { text: `You are an expert front-end engineer. Build a polished, working Multi-Page Single Page Application (SPA) from this plan + sketch.
 
 PLAN (JSON):
 ${JSON.stringify(plan, null, 2)}
 
 HARD REQUIREMENTS:
 - Output ONE complete HTML document (<!DOCTYPE html> ... </html>).
+- You MUST implement a Single Page Application (SPA) architecture:
+  - All pages from the plan must be present in the HTML (e.g. as hidden <section> or <div> elements).
+  - Implement a simple JavaScript-based router in a <script> tag.
+  - Navigation between pages must work via JS (no page reloads).
+  - Use a "home" or "index" page as the initial view.
 - You MAY use Tailwind CSS via CDN: <script src="https://cdn.tailwindcss.com"></script>.
-- If using Tailwind, include a <script> block to configure a dark theme or specific colors matching the plan.
 - For all other assets: keep them inline (CSS in <style>, JS in <script>).
-- NO other external network requests: no remote <img>, no @import, no remote fonts.
-- For any third-party UI (Google Sign-In, GitHub OAuth, Stripe, Apple Pay, social embeds, etc.): DO NOT use the real widget/SDK. Build a self-contained STYLED MOCK BUTTON — inline SVG logo + label + hover state. A click can show an alert or a fake loading state, nothing more.
-- For images, use inline SVG, CSS gradients, or emoji. Never an external image URL.
-- Use modern, polished design: generous spacing, sensible neutral palette, system fonts, subtle shadows, rounded corners. Match the theme: ${plan.theme}.
-- Make interactive elements actually work (toggle states, form validation, tab switching, etc.) using vanilla JS.
+- NO other external network requests.
+- For any third-party UI (Google Sign-In, etc.): Build a self-contained STYLED MOCK BUTTON.
+- For images, use inline SVG, CSS gradients, or emoji.
+- Use modern, polished design. Match the theme: ${plan.theme}.
+- Make interactive elements actually work using vanilla JS.
 - Honor the layout shown in the sketch.
 - Output ONLY the HTML — no markdown fences, no commentary, no leading or trailing text.` },
           { inline_data: { mime_type: 'image/png', data: sketchB64 } }
