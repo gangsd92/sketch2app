@@ -16,7 +16,8 @@ A three-pane studio with a Gemini-powered agent in the middle:
 2. **Agent** — hit *Run agent*. A multi-step Gemini agent:
    - **① Analyze** — vision model reads the sketch and produces a **structured plan** (JSON-schema enforced): title, summary, components, theme, interactions.
    - **② Build** — composes the plan + sketch into a complete, self-contained HTML page.
-   - **③ Refine** — chat box at the bottom of the agent pane. Type "make it dark mode", "add a sign-up link", "use a teal palette" — Gemini patches the live app.
+   - **③ Refine** — chat box at the bottom of the agent pane. Type "make it dark mode", "add a sign-up link", "use a teal palette" — Gemini patches the live app. **You can even draw on the sketch to point at things or add new elements while you chat.**
+   - **④ Voice** — hit the microphone icon to dictate your refinements hands-free.
 3. **Live output** — the generated app runs in a sandboxed iframe on the right. Toggle to Code view, copy, or download.
 
 Built with **Tailwind (shadcn-style aesthetic)**, vanilla JS, one HTML file, no backend.
@@ -25,7 +26,7 @@ Built with **Tailwind (shadcn-style aesthetic)**, vanilla JS, one HTML file, no 
 
 The fastest path from "idea in your head" to "working product on screen" is currently typing a 200-word prompt. That's a writing skill, not a design skill. Sketching is universal — kids, PMs, designers, founders all sketch. We let the sketch be the prompt.
 
-This is **multimodal reasoning as a creative tool**: vision in, working code out, no intermediate text representation.
+This is **multimodal reasoning as a creative tool**: vision + voice in, working code out, no intermediate text representation.
 
 ## Demo (60 seconds)
 
@@ -84,10 +85,10 @@ This is **multimodal reasoning as a creative tool**: vision in, working code out
 
 ## Roadmap
 
-- **Refine loop**: send the current generated HTML + new sketch back to Gemini for iteration
-- **Voice prompts** ("make it dark mode") layered over the sketch
-- **Multi-page**: generate a small sitemap from a sketched flow
-- **Component library mode**: paste your design tokens, get on-brand output
+- [x] **Refine loop**: send the current generated HTML + new sketch back to Gemini for iteration
+- [x] **Voice prompts**: dictate refinements using the microphone
+- [ ] **Multi-page**: generate a small sitemap from a sketched flow
+- [ ] **Component library mode**: paste your design tokens, get on-brand output
 
 ## License
 
