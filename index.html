@@ -405,13 +405,16 @@ Analyze it and produce a structured plan. Be concrete and decisive. If something
 PLAN (JSON):
 ${JSON.stringify(plan, null, 2)}
 
-REQUIREMENTS:
+HARD REQUIREMENTS:
 - Output ONE complete HTML document (<!DOCTYPE html> ... </html>).
-- All CSS inline in <style>, all JS inline in <script>. No external network requests.
+- All CSS inline in <style>, all JS inline in <script>.
+- NO external network requests of any kind: no <script src="...">, no <link href="..." rel="stylesheet">, no <img src="https://...">, no @import, no fetch(), no remote fonts. The page MUST render fully offline.
+- For any third-party UI (Google Sign-In, GitHub OAuth, Stripe, Apple Pay, social embeds, etc.): DO NOT use the real widget/SDK. Build a self-contained STYLED MOCK BUTTON — inline SVG logo + label + hover state. A click can show an alert or a fake loading state, nothing more.
+- For images, use inline SVG, CSS gradients, or emoji. Never an external image URL.
 - Use modern, polished design: generous spacing, sensible neutral palette, system fonts, subtle shadows, rounded corners. Match the theme: ${plan.theme}.
-- Make interactive elements actually work (toggle states, form validation, etc).
+- Make interactive elements actually work (toggle states, form validation, tab switching, etc.) using vanilla JS.
 - Honor the layout shown in the sketch.
-- Output ONLY the HTML — no markdown fences, no commentary.` },
+- Output ONLY the HTML — no markdown fences, no commentary, no leading or trailing text.` },
           { inline_data: { mime_type: 'image/png', data: sketchB64 } }
         ],
         temperature: 0.55,
@@ -446,7 +449,14 @@ ${lastCode}
 
 USER INSTRUCTION: "${instruction}"
 
-Return the FULL updated HTML document. Output ONLY the HTML — no markdown fences, no commentary.` },
+HARD REQUIREMENTS for the updated HTML:
+- Return the FULL updated HTML document (<!DOCTYPE html> ... </html>).
+- NO external network requests: no <script src="...">, no <link rel="stylesheet" href="...">, no remote <img>, no @import, no fetch(), no remote fonts. The page MUST render fully offline.
+- For any third-party UI (Google Sign-In, GitHub OAuth, Stripe, Apple Pay, social embeds, etc.): DO NOT use the real widget or SDK. Build a self-contained STYLED MOCK BUTTON — inline SVG logo + label. A click may show an alert or fake loading state, nothing more.
+- For images, use inline SVG, CSS gradients, or emoji. Never external image URLs.
+- Preserve unrelated parts of the existing HTML; only change what the instruction asks for.
+- Make sure all HTML tags are well-formed: every attribute lives inside its opening tag, every tag is closed.
+- Output ONLY the HTML — no markdown fences, no commentary, no leading or trailing text.` },
         ],
         temperature: 0.4,
       });
