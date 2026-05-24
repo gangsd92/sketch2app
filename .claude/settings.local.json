@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(open *)",
+      "Bash(git init *)",
+      "Bash(git config *)",
+      "Bash(gh auth *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(gh repo *)",
+      "Bash(git push *)",
+      "Bash(curl *)",
+      "Bash(git -c user.useConfigOnly=true -c commit.gpgsign=false commit -m ' *)",
+      "Bash(git rm *)",
+      "Bash(gh api *)",
+      "Bash(awk '{ if \\($1 > 0\\) print \"✓ Live site contains the hardened prompt \\(matches found: \" $1 \"\\)\"; else print \"✗ Live site does NOT contain the hardened prompt yet\" }')"
+    ]
+  }
+}
